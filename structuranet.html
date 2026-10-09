@@ -1,0 +1,781 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>StructuraNet AI Case Study</title><meta name="description" content="How Farah Elshenawy built the Python AI engine of StructuraNet AI: LLM topology synthesis, auto-repair, a three-gate safe merge, and an 11-check GNS3 validator."><link rel="canonical" href="https://farah-elshenawy.vercel.app/structuranet.html"><meta name="theme-color" content="#101010"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta property="og:type" content="website"><meta property="og:site_name" content="Farah Elshenawy"><meta property="og:title" content="StructuraNet AI Case Study"><meta property="og:description" content="How Farah Elshenawy built the Python AI engine of StructuraNet AI: LLM topology synthesis, auto-repair, a three-gate safe merge, and an 11-check GNS3 validator."><meta property="og:url" content="https://farah-elshenawy.vercel.app/structuranet.html"><meta property="og:image" content="https://farah-elshenawy.vercel.app/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@FarahElshenawy"><meta name="twitter:title" content="StructuraNet AI Case Study"><meta name="twitter:description" content="How Farah Elshenawy built the Python AI engine of StructuraNet AI: LLM topology synthesis, auto-repair, a three-gate safe merge, and an 11-check GNS3 validator."><meta name="twitter:image" content="https://farah-elshenawy.vercel.app/og.png"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Farah Elshenawy","jobTitle":"AI Engineer","address":{"@type":"PostalAddress","addressLocality":"Cairo","addressCountry":"EG"},"email":"mailto:farah.elshenawy2@gmail.com","alumniOf":"Tanta University","url":"https://farah-elshenawy.vercel.app","sameAs":["https://github.com/FarahElshenawi","https://www.linkedin.com/in/farah-elshenawy","https://x.com/FarahElshenawy"]}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap"><style>
+/* Layout: Factory "war room" — dark canvas, text-left / evidence-right compositions, Bone cards as the one hierarchy device, mono labels for every measured fact. Single dark theme by design. */
+:root {
+  color-scheme: dark;
+  --canvas: #101010;
+  --lift: #1d1a18;
+  --lift-deep: #161413;
+  --stroke: #3d3a39;
+  --graphite: #4d4947;
+  --muted: #8a8380;
+  --stone: #b8b3b0;
+  --bone: #eeeeee;
+  --chalk: #fafafa;
+  --signal: #ee6018;
+  --signal-wash: rgba(238, 96, 24, 0.14);
+  --metric: #a0ca92;
+  --metric-wash: rgba(160, 202, 146, 0.14);
+  --on-bone: #101010;
+  --on-bone-muted: #5a5452;
+  --on-bone-stroke: #d4d0cd;
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --r-btn: 3px;
+  --r-card: 10px;
+  --r-panel: 20px;
+  --wrap: 1200px;
+  --gutter: clamp(16px, 4vw, 40px);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+body {
+  background: var(--canvas); color: var(--bone);
+  font-family: var(--font-sans); font-size: 16px; line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  padding-inline: var(--gutter); padding-block: 0; margin: 0;
+  overflow-x: hidden;
+}
+a { color: inherit; }
+img, video { max-width: 100%; display: block; }
+h1, h2, h3, h4 { font-weight: 400; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+code { font-family: var(--font-mono); font-size: 0.9em; color: var(--bone); }
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; border-radius: 2px; }
+.wrap { max-width: var(--wrap); margin-inline: auto; }
+.mono { font-family: var(--font-mono); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--stone); display: inline-flex; align-items: center; gap: 8px; }
+.pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--signal); flex: none; }
+.pulse.live { animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 4px rgba(238, 96, 24, 0.18); } }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; gap: 8px; font: 500 14px/1 var(--font-sans); text-decoration: none; padding: 12px 16px; border-radius: var(--r-btn); border: 1px solid transparent; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; }
+.btn-light { background: var(--chalk); color: var(--on-bone); }
+.btn-light:hover { background: #ffffff; }
+.btn-dark { background: var(--lift); color: var(--bone); border-color: var(--stroke); }
+.btn-dark:hover { border-color: var(--graphite); background: #24201e; }
+.btn-ghost { color: var(--stone); padding-inline: 4px; background: none; }
+.btn-ghost:hover { color: var(--bone); }
+.btn svg { width: 15px; height: 15px; flex: none; }
+
+/* nav */
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; margin-inline: calc(var(--gutter) * -1); padding: 0 var(--gutter); background: rgba(16, 16, 16, 0.88); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid rgba(61, 58, 57, 0.5); }
+.nav-in { height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.wordmark { font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.1em; text-decoration: none; color: var(--bone); white-space: nowrap; }
+.wordmark span { color: var(--signal); }
+.nav-links { display: flex; gap: 26px; }
+.nav-links a { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+.nav-links a:hover { color: var(--bone); }
+.nav .btn { padding: 9px 14px; font-size: 13px; }
+@media (max-width: 860px) { .nav-links { display: none; } }
+
+/* hero */
+.hero { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: clamp(32px, 5vw, 72px); align-items: center; padding-block: clamp(48px, 8vw, 104px) clamp(56px, 8vw, 96px); }
+.hero h1 { font-size: clamp(40px, 6.2vw, 72px); line-height: 1.02; letter-spacing: -0.045em; margin-top: 22px; }
+.hero h1 em { font-style: normal; color: var(--stone); }
+.lede { margin-top: 24px; font-size: 18px; color: var(--stone); max-width: 56ch; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 32px; align-items: center; }
+.ticks { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 36px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.ticks span::before { content: "✓ "; color: var(--metric); }
+@media (max-width: 900px) { .hero { grid-template-columns: 1fr; } .hero-window { max-width: 460px; } }
+
+/* window frame */
+.window { background: var(--lift-deep); border: 1px solid var(--stroke); border-radius: var(--r-panel); overflow: hidden; }
+.window-bar { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--stroke); }
+.dots { display: flex; gap: 6px; }
+.dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--graphite); display: block; }
+.window-bar .mono { font-size: 12px; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.status { font-family: var(--font-mono); font-size: 11px; color: var(--metric); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--metric); }
+.hero-window { animation: rise 0.6s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes rise { from { transform: translateY(14px); } to { transform: none; } }
+.portrait { aspect-ratio: 4 / 5; max-width: 100%; overflow: hidden; border-bottom: 1px solid var(--stroke); }
+.portrait img { width: 100%; height: 100%; object-fit: cover; }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tile { padding: 14px 16px; border-right: 1px solid var(--stroke); min-width: 0; }
+.tile:last-child { border-right: 0; }
+.k { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.tile .v { font-size: 22px; letter-spacing: -0.03em; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.green { color: var(--metric); }
+.orange { color: var(--signal); }
+
+/* marquee */
+.marquee { border-block: 1px solid var(--stroke); margin-inline: calc(var(--gutter) * -1); overflow: hidden; padding-block: 18px; }
+.marquee-track { display: flex; gap: 48px; width: max-content; animation: slide 48s linear infinite; padding-left: 48px; }
+.marquee-track span { font-family: var(--font-mono); font-size: 14px; color: var(--muted); white-space: nowrap; }
+@keyframes slide { to { transform: translateX(-50%); } }
+
+/* sections */
+section { padding-block: clamp(64px, 9vw, 112px); }
+.sec-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 16px 32px; margin-bottom: 40px; }
+.sec-head h2 { font-size: clamp(30px, 4vw, 44px); letter-spacing: -0.035em; line-height: 1.08; margin-top: 14px; }
+.sec-head > p { color: var(--muted); max-width: 46ch; }
+.prose { color: var(--stone); font-size: 17px; max-width: 64ch; display: grid; gap: 14px; }
+.prose b { color: var(--bone); font-weight: 500; }
+
+/* metrics */
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.metric { border: 1px solid var(--stroke); border-radius: var(--r-card); padding: 20px; display: flex; flex-direction: column; gap: 10px; text-decoration: none; transition: border-color 0.2s; }
+a.metric:hover { border-color: var(--graphite); }
+.metric .v { font-size: clamp(32px, 4vw, 44px); letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.metric .d { font-size: 14px; color: var(--stone); }
+.metric .src { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--stroke); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+a.metric:hover .src { color: var(--bone); }
+@media (max-width: 960px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .metrics { grid-template-columns: 1fr; } }
+
+/* case study block */
+.case { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(32px, 5vw, 64px); align-items: start; }
+.case h3 { font-size: clamp(30px, 4vw, 44px); letter-spacing: -0.035em; line-height: 1.05; margin-top: 14px; }
+.role { font-family: var(--font-mono); font-size: 12px; color: var(--stone); margin-top: 14px; letter-spacing: 0.04em; }
+.intro { margin-top: 20px; color: var(--stone); font-size: 17px; max-width: 54ch; }
+.bullets { margin-top: 24px; display: grid; gap: 12px; }
+.bullets li { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 12px; color: var(--stone); font-size: 15px; }
+.bullets li::before { content: ""; width: 6px; height: 6px; margin-top: 9px; background: var(--signal); border-radius: 50%; }
+.bullets b { color: var(--bone); font-weight: 500; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 22px; }
+.chip { font-family: var(--font-mono); font-size: 12px; color: var(--stone); border: 1px solid var(--stroke); border-radius: var(--r-btn); padding: 4px 8px; }
+.case-sticky { position: sticky; top: 96px; }
+.credit { margin-top: 22px; padding: 14px 16px; border: 1px solid var(--stroke); border-radius: var(--r-card); font-size: 14px; color: var(--muted); }
+.credit b { color: var(--stone); font-weight: 500; }
+@media (max-width: 960px) { .case { grid-template-columns: 1fr; } .case-sticky { position: static; } }
+
+.shot { cursor: zoom-in; display: block; width: 100%; padding: 0; border: 0; background: none; text-align: left; }
+.shot img { width: 100%; height: auto; }
+.gallery { display: grid; gap: 16px; }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 640px) { .pair { grid-template-columns: 1fr; } }
+.frame { border: 1px solid var(--stroke); border-radius: var(--r-card); overflow: hidden; background: var(--lift-deep); margin: 0; }
+.frame figcaption { display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px; border-top: 1px solid var(--stroke); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.04em; color: var(--muted); }
+.frame figcaption b { color: var(--stone); font-weight: 400; }
+figure { margin: 0; }
+
+/* flow */
+.flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 48px; counter-reset: step; }
+.flow li { border: 1px solid var(--stroke); border-radius: var(--r-card); padding: 16px; counter-increment: step; position: relative; }
+.flow li::before { content: "STEP " counter(step); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; color: var(--muted); }
+.flow li.ai { border-color: rgba(238, 96, 24, 0.55); }
+.flow li.ai::after { content: "MY PART"; position: absolute; top: 14px; right: 14px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; color: var(--signal); }
+.flow h4 { font-size: 16px; font-weight: 500; margin: 10px 0 4px; letter-spacing: -0.01em; }
+.flow p { font-size: 13px; color: var(--muted); }
+@media (max-width: 960px) { .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } .flow li:last-child { grid-column: 1 / -1; } }
+@media (max-width: 480px) { .flow { grid-template-columns: 1fr; } }
+
+/* bone card */
+.bone { background: var(--bone); color: var(--on-bone); border-radius: var(--r-panel); padding: clamp(20px, 3.5vw, 36px); }
+.bone .eyebrow { color: var(--on-bone-muted); }
+.bone .btn-dark { background: var(--on-bone); color: var(--chalk); border-color: var(--on-bone); }
+.bone .btn-dark:hover { background: #2a2624; }
+.arch { display: grid; grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr); gap: clamp(24px, 4vw, 48px); align-items: center; }
+.arch h3 { font-size: clamp(24px, 3vw, 32px); letter-spacing: -0.03em; line-height: 1.1; margin-top: 12px; }
+.arch p { color: var(--on-bone-muted); margin-top: 14px; font-size: 15px; }
+.arch .actions { margin-top: 22px; }
+.arch .shot img { border-radius: 8px; border: 1px solid var(--on-bone-stroke); background: #fff; }
+@media (max-width: 860px) { .arch { grid-template-columns: 1fr; } }
+
+/* live demo */
+.demo { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: clamp(24px, 4vw, 48px); align-items: start; }
+.demo-copy h2 { font-size: clamp(30px, 4vw, 44px); letter-spacing: -0.035em; line-height: 1.08; margin-top: 14px; }
+.demo-copy .intro { font-size: 16px; }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border: 1px solid var(--stroke); border-radius: var(--r-card); margin-top: 24px; overflow: hidden; }
+.facts div { padding: 12px 14px; border-right: 1px solid var(--stroke); min-width: 0; }
+.facts div:last-child { border-right: 0; }
+.facts .v { font-size: 20px; letter-spacing: -0.02em; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.lab { padding: 18px; display: grid; gap: 16px; }
+.lab-main { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 18px; align-items: start; }
+.scan-view { aspect-ratio: 1; max-width: 100%; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid var(--stroke); position: relative; }
+.scan-view canvas { width: 100%; height: 100%; display: block; image-rendering: auto; }
+.scan-tag { position: absolute; left: 8px; bottom: 8px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--stone); background: rgba(16,16,16,0.8); padding: 3px 6px; border-radius: 2px; }
+.verdict { display: grid; gap: 4px; }
+.verdict .label { font-size: 26px; letter-spacing: -0.03em; line-height: 1.1; }
+.verdict .sub { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.probs { display: grid; gap: 10px; margin-top: 14px; }
+.prob { display: grid; grid-template-columns: 92px minmax(0, 1fr) 52px; gap: 10px; align-items: center; font-size: 13px; color: var(--stone); }
+.prob .bar { height: 8px; background: var(--lift); border-radius: 2px; overflow: hidden; }
+.prob .bar i { display: block; height: 100%; width: 0; background: var(--graphite); border-radius: 2px; transition: width 0.4s cubic-bezier(.2,.7,.2,1); }
+.prob.top .bar i { background: var(--metric); }
+.prob b { font-family: var(--font-mono); font-weight: 400; font-size: 12px; text-align: right; color: var(--bone); font-variant-numeric: tabular-nums; }
+.picker { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.pick { padding: 0; border: 1px solid var(--stroke); border-radius: 6px; background: #000; cursor: pointer; overflow: hidden; position: relative; aspect-ratio: 1; max-width: 100%; transition: border-color 0.15s; }
+.pick img { width: 100%; height: 100%; object-fit: cover; }
+.pick span { position: absolute; inset: auto 0 0 0; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.04em; color: var(--bone); background: rgba(16,16,16,0.78); padding: 2px 3px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pick:hover { border-color: var(--graphite); }
+.pick[aria-pressed="true"] { border-color: var(--signal); }
+.pick.upload { background: var(--lift); display: grid; place-items: center; color: var(--stone); font-size: 22px; }
+.pick.upload span { background: none; color: var(--muted); }
+.note { font-size: 12px; color: var(--muted); }
+.note b { color: var(--stone); font-weight: 400; }
+@media (max-width: 960px) { .demo { grid-template-columns: 1fr; } }
+@media (max-width: 520px) { .lab-main { grid-template-columns: 1fr; } .picker { grid-template-columns: repeat(3, minmax(0, 1fr)); } .facts { grid-template-columns: 1fr; } .facts div { border-right: 0; border-bottom: 1px solid var(--stroke); } .facts div:last-child { border-bottom: 0; } }
+
+/* confusion matrix */
+.cm-wrap { overflow-x: auto; }
+.cm { border-collapse: separate; border-spacing: 3px; font-variant-numeric: tabular-nums; min-width: 0; }
+.cm th { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; font-weight: 400; color: var(--muted); padding: 4px 6px; white-space: nowrap; }
+.cm th.row { text-align: right; }
+.cm td { width: 52px; height: 36px; text-align: center; font-family: var(--font-mono); font-size: 12px; border-radius: 3px; color: var(--stone); }
+.cm td.diag { color: var(--canvas); font-weight: 500; }
+.cm-cap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+/* project grid */
+.projects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+@media (max-width: 900px) { .projects { grid-template-columns: 1fr; } }
+.project { border: 1px solid var(--stroke); border-radius: var(--r-card); overflow: hidden; display: flex; flex-direction: column; transition: border-color 0.2s; min-width: 0; }
+.project:hover { border-color: var(--graphite); }
+.p-visual { background: var(--lift-deep); border-bottom: 1px solid var(--stroke); padding: 18px; display: grid; gap: 14px; align-content: start; }
+.p-visual.flush { padding: 0; }
+.p-body { padding: 22px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+.p-tag { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.p-body h3 { font-size: 22px; letter-spacing: -0.025em; line-height: 1.2; }
+.p-body p { color: var(--stone); font-size: 15px; }
+.p-body .chips { margin-top: 2px; }
+.p-foot { margin-top: auto; padding-top: 8px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.p-foot a { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--bone); text-decoration: none; }
+.p-foot a:hover { color: var(--signal); }
+.p-stat { font-family: var(--font-mono); font-size: 12px; color: var(--metric); }
+.v-cap { font-family: var(--font-mono); font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+.samples { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.samples figure { display: grid; gap: 4px; }
+.samples img { aspect-ratio: 1; max-width: 100%; object-fit: cover; border-radius: 4px; border: 1px solid var(--stroke); }
+.samples figcaption { font-family: var(--font-mono); font-size: 10px; color: var(--muted); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 420px) { .samples { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.hbars { display: grid; gap: 8px; }
+.hbar { display: grid; grid-template-columns: 112px minmax(0, 1fr) 44px; gap: 10px; align-items: center; font-family: var(--font-mono); font-size: 12px; color: var(--stone); }
+.hbar .track { height: 8px; background: var(--lift); border-radius: 2px; overflow: hidden; }
+.hbar .track i { display: block; height: 100%; background: var(--graphite); border-radius: 2px; }
+.hbar.best .track i { background: var(--metric); }
+.hbar.weak .track i { background: var(--signal); }
+.hbar b { font-weight: 400; color: var(--bone); text-align: right; font-variant-numeric: tabular-nums; }
+
+.video { width: 100%; aspect-ratio: 16 / 9; max-width: 100%; object-fit: cover; background: #000; }
+
+/* diabetes playground */
+.play { display: grid; gap: 12px; }
+.fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.02em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.field input { width: 100%; min-width: 0; background: var(--lift); color: var(--bone); border: 1px solid var(--stroke); border-radius: var(--r-btn); padding: 7px 8px; font: 13px var(--font-mono); font-variant-numeric: tabular-nums; }
+.field input:focus { outline: none; border-color: var(--signal); }
+.play-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.play-row .btn { padding: 9px 12px; font-size: 13px; }
+.http { background: var(--canvas); border: 1px solid var(--stroke); border-radius: 6px; padding: 12px 14px; font-family: var(--font-mono); font-size: 12px; line-height: 1.65; color: var(--stone); overflow-x: auto; white-space: pre; min-height: 3.3em; }
+.http .m { color: var(--signal); }
+.http .ok { color: var(--metric); }
+.http .str { color: var(--bone); }
+@media (max-width: 520px) { .fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.app-shot { border-radius: 6px; overflow: hidden; border: 1px solid var(--stroke); }
+.app-shot img { height: 250px; width: 100%; object-fit: cover; object-position: top left; }
+
+/* repos */
+.repos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+@media (max-width: 960px) { .repos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .repos { grid-template-columns: 1fr; } }
+.repo { border: 1px solid var(--stroke); border-radius: var(--r-card); padding: 16px; text-decoration: none; display: flex; flex-direction: column; gap: 8px; transition: border-color 0.2s; min-width: 0; }
+.repo:hover { border-color: var(--graphite); }
+.repo b { font-family: var(--font-mono); font-size: 13px; font-weight: 400; color: var(--bone); overflow-wrap: anywhere; }
+.repo p { font-size: 13px; color: var(--muted); }
+.repo span { margin-top: auto; font-family: var(--font-mono); font-size: 11px; color: var(--stone); }
+
+/* experience */
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 900px) { .two { grid-template-columns: 1fr; } }
+.role-card { border: 1px solid var(--stroke); border-radius: var(--r-card); padding: clamp(20px, 3vw, 28px); }
+.role-top { display: flex; justify-content: space-between; align-items: start; gap: 12px; flex-wrap: wrap; }
+.role-card h3 { font-size: 22px; letter-spacing: -0.025em; line-height: 1.2; margin-top: 18px; }
+.org { color: var(--stone); margin-top: 6px; font-size: 15px; }
+.badge { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; color: var(--stone); border: 1px solid var(--stroke); border-radius: var(--r-btn); padding: 4px 8px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.timeline { display: grid; }
+.t-row { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 16px; padding-block: 18px; border-top: 1px solid var(--stroke); }
+.t-row:last-child { border-bottom: 1px solid var(--stroke); }
+.t-when { font-family: var(--font-mono); font-size: 12px; color: var(--muted); padding-top: 3px; }
+.t-row h4 { font-size: 16px; font-weight: 500; letter-spacing: -0.01em; }
+.t-row .org { font-size: 14px; margin-top: 2px; }
+.t-row .note { margin-top: 6px; font-size: 14px; }
+@media (max-width: 520px) { .t-row { grid-template-columns: 1fr; gap: 4px; } }
+
+/* tables */
+.table-wrap { overflow-x: auto; border: 1px solid var(--stroke); border-radius: var(--r-card); }
+table.data { width: 100%; border-collapse: collapse; min-width: 520px; }
+table.data th, table.data td { text-align: left; padding: 13px 18px; border-bottom: 1px solid var(--stroke); font-size: 14px; vertical-align: top; }
+table.data tr:last-child td { border-bottom: 0; }
+table.data th { font-family: var(--font-mono); font-size: 11px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+table.data td.m { font-family: var(--font-mono); font-size: 12px; color: var(--stone); white-space: nowrap; }
+table.data td:first-child { color: var(--bone); }
+table.data td.desc { color: var(--stone); }
+.sev { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; padding: 3px 6px; border-radius: 2px; white-space: nowrap; }
+.sev.crit { background: rgba(238, 96, 24, 0.2); color: #ffb08a; }
+.sev.err { background: rgba(238, 96, 24, 0.1); color: var(--signal); }
+.sev.warn { background: var(--lift); color: var(--stone); }
+
+/* skills */
+.skills { display: grid; }
+.s-row { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px; padding-block: 18px; border-top: 1px solid var(--stroke); align-items: baseline; }
+.s-row:last-child { border-bottom: 1px solid var(--stroke); }
+.s-row h4 { font-family: var(--font-mono); font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.s-row .chips { margin-top: 0; }
+.s-row .chip { color: var(--bone); }
+@media (max-width: 640px) { .s-row { grid-template-columns: 1fr; gap: 10px; } }
+.grade { display: flex; align-items: baseline; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+.grade .v { font-size: 40px; letter-spacing: -0.04em; color: var(--metric); line-height: 1; }
+
+/* contact */
+.contact { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 64px); align-items: start; }
+.contact h2 { font-size: clamp(32px, 4.6vw, 52px); letter-spacing: -0.04em; line-height: 1.02; margin-top: 16px; }
+.contact .lead { color: var(--on-bone-muted); margin-top: 18px; max-width: 44ch; }
+.c-list { display: grid; }
+.c-row { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding-block: 14px; border-top: 1px solid var(--on-bone-stroke); }
+.c-row:last-child { border-bottom: 1px solid var(--on-bone-stroke); }
+.c-row .k { color: var(--on-bone-muted); }
+.c-row .v { font-size: 15px; min-width: 0; overflow-wrap: anywhere; }
+.c-row a.v { text-decoration: none; }
+.c-row a.v:hover { text-decoration: underline; text-underline-offset: 3px; }
+.copy { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; background: none; border: 1px solid var(--on-bone-stroke); color: var(--on-bone); border-radius: var(--r-btn); padding: 5px 8px; cursor: pointer; }
+.copy:hover { border-color: var(--on-bone-muted); }
+@media (max-width: 860px) { .contact { grid-template-columns: 1fr; } }
+@media (max-width: 420px) { .c-row { grid-template-columns: 1fr auto; } .c-row .k { grid-column: 1 / -1; } }
+
+footer { border-top: 1px solid var(--stroke); padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+footer a { color: var(--stone); text-decoration: none; }
+footer a:hover { color: var(--bone); }
+
+/* case study page */
+.cs-hero { padding-block: clamp(40px, 7vw, 88px) clamp(32px, 5vw, 56px); display: grid; gap: 22px; }
+.cs-hero h1 { font-size: clamp(38px, 6vw, 68px); line-height: 1.02; letter-spacing: -0.045em; max-width: 18ch; }
+.cs-hero h1 em { font-style: normal; color: var(--stone); }
+.meta-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--stroke); border-radius: var(--r-card); overflow: hidden; }
+.meta-strip div { padding: 14px 16px; border-right: 1px solid var(--stroke); min-width: 0; }
+.meta-strip div:last-child { border-right: 0; }
+.meta-strip .v { margin-top: 4px; font-size: 15px; color: var(--bone); }
+@media (max-width: 760px) { .meta-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } .meta-strip div:nth-child(2) { border-right: 0; } .meta-strip div:nth-child(-n+2) { border-bottom: 1px solid var(--stroke); } }
+.split { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: clamp(24px, 5vw, 64px); align-items: start; }
+.split h2 { font-size: clamp(26px, 3.4vw, 38px); letter-spacing: -0.03em; line-height: 1.1; margin-top: 14px; }
+@media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
+.pipeline { display: grid; gap: 8px; counter-reset: stage; }
+.stage { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 14px; align-items: start; border: 1px solid var(--stroke); border-radius: var(--r-card); padding: 14px 16px; counter-increment: stage; }
+.stage::before { content: counter(stage, decimal-leading-zero); font-family: var(--font-mono); font-size: 12px; color: var(--muted); padding-top: 3px; }
+.stage h4 { font-size: 16px; font-weight: 500; letter-spacing: -0.01em; }
+.stage p { font-size: 14px; color: var(--muted); margin-top: 4px; }
+.stage .kind { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; padding: 4px 7px; border-radius: 2px; white-space: nowrap; align-self: start; }
+.kind.llm { background: var(--signal-wash); color: var(--signal); }
+.kind.det { background: var(--metric-wash); color: var(--metric); }
+.stage.mine { border-color: rgba(238, 96, 24, 0.4); }
+@media (max-width: 560px) { .stage { grid-template-columns: 32px minmax(0, 1fr); } .stage .kind { grid-column: 2; justify-self: start; } }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 18px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); align-items: center; }
+.gates { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.gate { border: 1px solid var(--on-bone-stroke); border-radius: var(--r-card); padding: 16px; background: #f6f6f6; }
+.gate .k { color: var(--on-bone-muted); }
+.gate h4 { font-size: 18px; letter-spacing: -0.02em; margin-top: 8px; color: var(--on-bone); }
+.gate p { font-size: 14px; color: var(--on-bone-muted); margin-top: 6px; }
+@media (max-width: 760px) { .gates { grid-template-columns: 1fr; } }
+.codeblock { margin-top: 20px; background: var(--canvas); color: var(--stone); border-radius: var(--r-card); padding: 16px 18px; font-family: var(--font-mono); font-size: 12px; line-height: 1.7; overflow-x: auto; white-space: pre; }
+.codeblock .c { color: var(--muted); }
+.codeblock .kw { color: var(--signal); }
+.codeblock .s { color: var(--metric); }
+.codecap { font-family: var(--font-mono); font-size: 11px; color: var(--on-bone-muted); margin-top: 8px; }
+.cards3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.card { border: 1px solid var(--stroke); border-radius: var(--r-card); padding: 18px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.card h4 { font-size: 17px; font-weight: 500; letter-spacing: -0.01em; }
+.card p { font-size: 14px; color: var(--stone); }
+.card code { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+@media (max-width: 900px) { .cards3 { grid-template-columns: 1fr; } }
+.cards2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 560px) { .cards2 { grid-template-columns: 1fr; } }
+.split > *, .case > *, .demo > *, .two > *, .contact > *, .arch > *, .hero > *, .lab-main > * { min-width: 0; }
+.tiers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.tier { border: 1px solid var(--stroke); border-radius: var(--r-card); padding: 18px; min-width: 0; }
+.tier.ent { border-color: rgba(238, 96, 24, 0.45); }
+.tier h4 { font-size: 20px; letter-spacing: -0.02em; margin-top: 8px; }
+.tier ul { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+@media (max-width: 900px) { .tiers { grid-template-columns: 1fr; } }
+.evidence { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.ev { border: 1px solid var(--stroke); border-radius: var(--r-card); padding: 20px; }
+.ev h4 { font-size: 18px; letter-spacing: -0.02em; margin-top: 10px; }
+.ev ul { margin-top: 14px; display: grid; gap: 10px; }
+.ev li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; font-size: 14px; color: var(--stone); }
+.ev li::before { font-family: var(--font-mono); font-size: 12px; padding-top: 1px; }
+.ev.yes li::before { content: "✓"; color: var(--metric); }
+.ev.no li::before { content: "–"; color: var(--muted); }
+@media (max-width: 860px) { .evidence { grid-template-columns: 1fr; } }
+.team { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--stroke); border-radius: var(--r-card); overflow: hidden; }
+.team div { padding: 14px 16px; border-right: 1px solid var(--stroke); border-bottom: 1px solid var(--stroke); font-size: 14px; color: var(--stone); min-width: 0; }
+.team div:nth-child(4n) { border-right: 0; }
+.team div:nth-last-child(-n+4) { border-bottom: 0; }
+.team div.me { color: var(--bone); }
+.team div.me::after { content: " · me"; color: var(--signal); font-family: var(--font-mono); font-size: 11px; }
+@media (max-width: 760px) { .team { grid-template-columns: repeat(2, minmax(0, 1fr)); } .team div:nth-child(4n) { border-right: 1px solid var(--stroke); } .team div:nth-child(2n) { border-right: 0; } .team div:nth-last-child(-n+4) { border-bottom: 1px solid var(--stroke); } .team div:nth-last-child(-n+2) { border-bottom: 0; } }
+
+/* lightbox + toast */
+dialog.lb { border: 1px solid var(--stroke); border-radius: var(--r-card); background: var(--lift-deep); color: var(--bone); padding: 0; max-width: min(1400px, 94vw); width: 100%; }
+dialog.lb::backdrop { background: rgba(5, 5, 5, 0.86); }
+dialog.lb img { width: 100%; height: auto; max-height: 80vh; object-fit: contain; background: var(--canvas); }
+.lb-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; border-top: 1px solid var(--stroke); font-family: var(--font-mono); font-size: 12px; color: var(--stone); }
+.lb-bar button { background: none; border: 1px solid var(--stroke); color: var(--bone); border-radius: var(--r-btn); padding: 6px 10px; font: 12px var(--font-mono); cursor: pointer; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--chalk); color: var(--on-bone); font-size: 14px; padding: 10px 16px; border-radius: var(--r-btn); z-index: 40; max-width: calc(100vw - 32px); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .hero-window, .pulse.live { animation: none; }
+  .marquee-track { animation: none; flex-wrap: wrap; width: auto; row-gap: 12px; padding-inline: var(--gutter); }
+  .marquee-track [aria-hidden="true"] { display: none; }
+  .prob .bar i { transition: none; }
+}
+
+</style></head><body><header class="nav">
+  <div class="nav-in wrap">
+    <a class="wordmark" href="index.html">FARAH ELSHENAWY<span>_</span></a>
+    <nav class="nav-links" aria-label="Case study sections">
+      <a href="#role">My role</a>
+      <a href="#pipeline">Pipeline</a>
+      <a href="#merge">Safe merge</a>
+      <a href="#evidence">Evidence</a>
+    </nav>
+    <a class="btn btn-dark" href="index.html">← Portfolio</a>
+  </div>
+</header>
+
+<main id="top">
+  <div class="cs-hero wrap">
+    <span class="eyebrow"><span class="pulse"></span>Case study · Graduation project, full mark · Tanta University, 2025–2026</span>
+    <h1>StructuraNet AI: from one sentence to <em>a running GNS3 lab</em></h1>
+    <p class="lede">An AI platform that turns a plain-English network description into a validated, simulation-ready GNS3 project with Cisco IOS configurations. I built the Python AI engine at its core.</p>
+    <div class="meta-strip">
+      <div><span class="k">My area</span><div class="v">Python AI engine</div></div>
+      <div><span class="k">Team</span><div class="v">8 engineers</div></div>
+      <div><span class="k">Supervisor</span><div class="v">Assoc. Prof. Hany El-Ghaish</div></div>
+      <div><span class="k">Result</span><div class="v green">Full mark</div></div>
+    </div>
+    <figure class="frame" style="margin-top:8px">
+      <button class="shot" type="button" data-zoom="img/structuranet-landing.webp" data-cap="StructuraNet AI landing page">
+        <img src="img/structuranet-landing.webp" alt="StructuraNet AI landing page" width="1360" height="942">
+      </button>
+      <figcaption><b>Product</b><span>React client · Express API · Python AI engine · MongoDB</span></figcaption>
+    </figure>
+  </div>
+
+  <section class="wrap" aria-labelledby="problem-h">
+    <div class="split">
+      <div>
+        <span class="eyebrow">The problem</span>
+        <h2 id="problem-h">Network design still starts by hand</h2>
+      </div>
+      <div class="prose">
+        <p>Engineers and students who prototype networks in GNS3 place every device, wire every interface, plan the addressing, and write the routing and security configuration themselves. It is slow and easy to get wrong, especially past a handful of nodes.</p>
+        <p>Existing automation tools such as NAPALM, Netmiko, and Terraform manage configuration for networks that already exist. None of them covers the step before that: going from an idea to a topology.</p>
+        <p><b>StructuraNet AI covers that step.</b> You describe what you want, refine it in conversation, review it on a canvas, and export a portable GNS3 project with startup configurations for every device.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="role" aria-labelledby="role-h">
+    <div class="split">
+      <div>
+        <span class="eyebrow">My role</span>
+        <h2 id="role-h">I built the Python AI engine</h2>
+        <p class="credit">The thesis's contribution breakdown lists my areas as <b>the Python AI engine, frontend integration, backend support, and environment work.</b></p>
+      </div>
+      <div class="cards2">
+        <div class="card"><span class="k">Phase 1</span><h4>Topology synthesis</h4><p>Prompting with the user's real hardware inventory, JSON output, auto-repair, validation, and retries.</p><code>ai/agent.py</code></div>
+        <div class="card"><span class="k">Phase 2</span><h4>Configuration generation</h4><p>A configuration brief plus Layer 3 design rules produce Cisco IOS configs for every device.</p><code>ai/config_agent.py</code></div>
+        <div class="card"><span class="k">Safety</span><h4>Security profiles</h4><p>Three tiers that change both the design rules and the depth of the generated IOS hardening.</p><code>ai/security_prompts.py</code></div>
+        <div class="card"><span class="k">Output</span><h4>Export and validation</h4><p>A 12-stage GNS3 exporter and an 11-check structural validator for the final archive.</p><code>export/gns3_exporter.py · export/validator.py</code></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="pipeline" aria-labelledby="pipe-h">
+    <div class="split">
+      <div class="case-sticky">
+        <span class="eyebrow">Design principle</span>
+        <h2 id="pipe-h">The LLM proposes. Python decides.</h2>
+        <div class="prose" style="margin-top:18px">
+          <p>A language model is good at reading intent and sketching a design. It is unreliable at port numbers, hardware limits, and file formats.</p>
+          <p>So the engine gives the model a narrow job and surrounds it with deterministic code. Every model output passes through repair, schema validation, and merge rules before anything is written to disk.</p>
+        </div>
+        <div class="legend"><span class="stage-kind kind llm" style="padding:4px 7px;border-radius:2px">LLM</span>model-generated <span class="kind det" style="padding:4px 7px;border-radius:2px">CODE</span>deterministic Python or Node.js <span style="border:1px solid rgba(238,96,24,.6);border-radius:3px;padding:2px 6px">outlined</span>stages I built</div>
+      </div>
+      <ol class="pipeline">
+        <li class="stage"><div><h4>Intent routing</h4><p>Deterministic shortcuts and a heuristic classifier answer simple requests without calling the model. Design requests enter a tool loop of up to 6 rounds.</p></div><span class="kind det">CODE</span></li>
+        <li class="stage mine"><div><h4>Topology synthesis</h4><p>The prompt carries the user's available hardware, per-device link limits, a six-step build algorithm, and 12 mandatory rules. The model returns JSON nodes and connections.</p></div><span class="kind llm">LLM</span></li>
+        <li class="stage mine"><div><h4>Auto-repair</h4><p>Three fixes run before validation: remove duplicate links, add a switch behind single-port devices, and bridge disconnected parts of the graph.</p></div><span class="kind det">CODE</span></li>
+        <li class="stage mine"><div><h4>Validate and retry</h4><p>Pydantic models check unique IDs, real endpoints, port limits, and full connectivity. Failures go back to the model as feedback, up to 3 attempts.</p></div><span class="kind det">CODE</span></li>
+        <li class="stage mine"><div><h4>Ports and hardware</h4><p>Ports are assigned by code, never by the model. Hardware properties for Dynamips, IOU, and QEMU nodes come from a 45-device catalog.</p></div><span class="kind det">CODE</span></li>
+        <li class="stage mine"><div><h4>Configuration generation</h4><p>A readable configuration brief and seven Layer 3 rules guide the model as it writes Cisco IOS configs for each device.</p></div><span class="kind llm">LLM</span></li>
+        <li class="stage mine"><div><h4>Three-gate safe merge</h4><p>Model-written configs can only fill software fields. Hardware and metadata set by code cannot be overwritten.</p></div><span class="kind det">CODE</span></li>
+        <li class="stage mine"><div><h4>Export and validate</h4><p>A 12-stage exporter writes a portable .gns3project archive with deterministic UUIDs. Then 11 structural checks run on that archive.</p></div><span class="kind det">CODE</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="wrap" id="merge" aria-labelledby="merge-h">
+    <div class="bone">
+      <span class="eyebrow">Three-gate safe merge</span>
+      <h2 id="merge-h" style="font-size:clamp(26px,3.4vw,38px);letter-spacing:-0.03em;line-height:1.1;margin-top:12px;max-width:24ch">Configs written by the model can't break the hardware.</h2>
+      <p style="color:var(--on-bone-muted);margin-top:14px;max-width:62ch">Phase 2 asks the model for device configurations, then merges them into a topology that deterministic code already built. Each key the model returns must pass three gates, and every rejection is logged with a reason.</p>
+      <div class="gates" style="margin-top:24px">
+        <div class="gate"><span class="k">Gate 1</span><h4>Whitelist</h4><p>Only five software keys are accepted, such as <code style="color:var(--on-bone)">startup_config_content</code>. Anything else, including internal <code style="color:var(--on-bone)">_metadata</code>, is dropped.</p></div>
+        <div class="gate"><span class="k">Gate 2</span><h4>No overwrite</h4><p>A value that is already set is never replaced. Empty placeholders are the only exception.</p></div>
+        <div class="gate"><span class="k">Gate 3</span><h4>Type check</h4><p>Each value must have the expected type. Config text must be a string, and the environment must be a dict or string.</p></div>
+      </div>
+      <pre class="codeblock"><span class="c"># structranet/ai/config_agent.py · safe_merge_configs (excerpt)</span>
+<span class="kw">for</span> key, value <span class="kw">in</span> config.items():
+    <span class="kw">if</span> key.startswith(<span class="s">"_"</span>):
+        <span class="kw">continue</span>                                   <span class="c"># internal metadata is never writable</span>
+    <span class="kw">if</span> key <span class="kw">not in</span> SOFTWARE_CONFIG_KEYS:          <span class="c"># Gate 1: whitelist</span>
+        reject(node_id, key, <span class="s">"not in whitelist"</span>); <span class="kw">continue</span>
+    <span class="kw">if</span> properties.get(key) <span class="kw">not in</span> (<span class="s">""</span>, {}, [], None):  <span class="c"># Gate 2: no overwrite</span>
+        reject(node_id, key, <span class="s">"already set"</span>); <span class="kw">continue</span>
+    <span class="kw">if not</span> isinstance(value, ALLOWED_VALUE_TYPES.get(key, (str,))):  <span class="c"># Gate 3: type</span>
+        reject(node_id, key, <span class="s">"wrong type"</span>); <span class="kw">continue</span>
+    properties[key] = value</pre>
+      <p class="codecap">Condensed from the repository. The full function also skips configs for unknown node IDs and counts merged keys.</p>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="bridge-h">
+    <div class="split">
+      <div>
+        <span class="eyebrow">Node.js ↔ Python</span>
+        <h2 id="bridge-h">One warm worker, one simple protocol</h2>
+        <div class="prose" style="margin-top:18px">
+          <p>The first version started a new Python process for every request, which re-imported the OpenAI SDK, the device catalog, and the validators each time.</p>
+          <p>The engine now runs as a persistent worker. It loads once and then takes commands from the Express backend as newline-delimited JSON. Every message carries a request ID, so progress events stream back to the browser over SSE while the work runs.</p>
+        </div>
+      </div>
+      <div>
+        <pre class="codeblock" style="margin-top:0"><span class="c">// request  (Node.js → stdin)</span>
+{<span class="s">"id"</span>: <span class="s">"7f3c…"</span>, <span class="s">"command"</span>: <span class="s">"generate"</span>, <span class="s">"args"</span>: {…}}
+<span class="c">// event    (stdout → Node.js → SSE)</span>
+{<span class="s">"id"</span>: <span class="s">"7f3c…"</span>, <span class="s">"event"</span>: <span class="s">"phase_change"</span>, <span class="s">"data"</span>: {…}}
+<span class="c">// response (stdout → Node.js)</span>
+{<span class="s">"id"</span>: <span class="s">"7f3c…"</span>, <span class="s">"ok"</span>: true, <span class="s">"result"</span>: {…}}</pre>
+        <div class="cards3" style="margin-top:16px">
+          <div class="card"><span class="k">Commands</span><h4>7 + ping</h4><p>generate, edit, export, qa, validate, catalog, brief</p></div>
+          <div class="card"><span class="k">Recovery</span><h4>3 levels</h4><p>Command error, worker crash, and spawn failure each recover on their own.</p></div>
+          <div class="card"><span class="k">Isolation</span><h4>Clean stdout</h4><p>Stray prints are captured so they can't corrupt the protocol stream.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="sec-h">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Security profiles</span>
+        <h2 id="sec-h">Hardening that changes the design</h2>
+      </div>
+      <p>The profile shapes both phases: it adds rules to the topology prompt and sets how deep the generated IOS hardening goes.</p>
+    </div>
+    <div class="tiers">
+      <div class="tier"><span class="k">Tier 1</span><h4>None</h4><p class="note" style="margin-top:8px">No security constraints. Useful for quick labs and teaching basics.</p></div>
+      <div class="tier"><span class="k">Tier 2</span><h4>Basic</h4><ul><li class="chip">SSH v2</li><li class="chip">AAA local auth</li><li class="chip">NTP</li><li class="chip">Syslog</li><li class="chip">Login block-for</li><li class="chip">No SNMP communities</li></ul></div>
+      <div class="tier ent"><span class="k">Tier 3</span><h4>Enterprise</h4><ul><li class="chip">Zone-based firewall</li><li class="chip">Anti-spoofing ACLs</li><li class="chip">OSPF MD5</li><li class="chip">HSRP</li><li class="chip">SNMPv3</li><li class="chip">DHCP snooping</li><li class="chip">Dynamic ARP inspection</li><li class="chip">Port security</li><li class="chip">uRPF</li></ul></div>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="val-h">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Export validation</span>
+        <h2 id="val-h">Eleven checks on every archive</h2>
+      </div>
+      <p>The project passes only with zero critical and zero error findings. Warnings are shown to the user as advice.</p>
+    </div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th scope="col">#</th><th scope="col">Check</th><th scope="col">Severity</th><th scope="col">What it verifies</th></tr></thead>
+        <tbody>
+          <tr><td class="m">01</td><td>ZIP structure</td><td><span class="sev crit">CRITICAL</span></td><td class="desc">Valid archive containing project.gns3 and nothing unexpected at the top level</td></tr>
+          <tr><td class="m">02</td><td>JSON schema</td><td><span class="sev crit">CRITICAL</span></td><td class="desc">Required keys, type "topology", revision 9, version 2.2.x</td></tr>
+          <tr><td class="m">03</td><td>Node validation</td><td><span class="sev err">ERROR</span></td><td class="desc">Required fields, legal node types, unique IDs, correct console types</td></tr>
+          <tr><td class="m">04</td><td>Dynamips compatibility</td><td><span class="sev err">ERROR</span></td><td class="desc">Platform, image naming, RAM range, and slot modules match GNS3's matrix</td></tr>
+          <tr><td class="m">05</td><td>Port reference integrity</td><td><span class="sev err">ERROR</span></td><td class="desc">Every link endpoint points to an adapter and port that exist</td></tr>
+          <tr><td class="m">06</td><td>Config file paths</td><td><span class="sev err">ERROR</span></td><td class="desc">Config paths in the JSON match real files inside the archive</td></tr>
+          <tr><td class="m">07</td><td>Template ID format</td><td><span class="sev warn">WARNING</span></td><td class="desc">Appliances carry UUID template IDs; built-in types carry none</td></tr>
+          <tr><td class="m">08</td><td>Compute cross-reference</td><td><span class="sev warn">WARNING</span></td><td class="desc">Every compute ID is local or listed in the project</td></tr>
+          <tr><td class="m">09</td><td>Switch VLAN sanity</td><td><span class="sev warn">WARNING</span></td><td class="desc">Access ports use VLAN 1–4094; trunks use dot1q</td></tr>
+          <tr><td class="m">10</td><td>Link integrity</td><td><span class="sev err">ERROR</span></td><td class="desc">No self-links, no duplicates, both endpoints exist</td></tr>
+          <tr><td class="m">11</td><td>UUID format</td><td><span class="sev warn">WARNING</span></td><td class="desc">All node, link, and project IDs are valid UUIDs</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="gal-h">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">In use</span>
+        <h2 id="gal-h">From prompt to GNS3</h2>
+      </div>
+    </div>
+    <div class="gallery">
+      <div class="pair">
+        <figure class="frame">
+          <button class="shot" type="button" data-zoom="img/structuranet-topology.webp" data-cap="ISP topology generated in the StructuraNet viewer">
+            <img src="img/structuranet-topology.webp" alt="Generated ISP topology in the StructuraNet viewer" width="1600" height="722" loading="lazy">
+          </button>
+          <figcaption><b>1 · Generated</b><span>ISP topology in the viewer</span></figcaption>
+        </figure>
+        <figure class="frame">
+          <button class="shot" type="button" data-zoom="img/structuranet-gns3.webp" data-cap="The same topology imported into GNS3">
+            <img src="img/structuranet-gns3.webp" alt="The same topology imported into GNS3" width="1330" height="552" loading="lazy">
+          </button>
+          <figcaption><b>2 · Imported</b><span>running in GNS3</span></figcaption>
+        </figure>
+      </div>
+      <div class="pair">
+        <figure class="frame">
+          <button class="shot" type="button" data-zoom="img/structuranet-export.webp" data-cap="Deployment kit: project file, device configs, requirements manifest">
+            <img src="img/structuranet-export.webp" alt="Deployment kit with project file, configs, and requirements manifest" width="1600" height="714" loading="lazy">
+          </button>
+          <figcaption><b>3 · Exported</b><span>deployment kit</span></figcaption>
+        </figure>
+        <figure class="frame">
+          <button class="shot" type="button" data-zoom="img/structuranet-security.webp" data-cap="Topology security analyzer">
+            <img src="img/structuranet-security.webp" alt="Topology security analyzer with findings" width="1280" height="615" loading="lazy">
+          </button>
+          <figcaption><b>4 · Audited</b><span>security analyzer</span></figcaption>
+        </figure>
+      </div>
+      <figure class="frame" style="background:#fff">
+        <button class="shot" type="button" data-zoom="img/structuranet-architecture.webp" data-cap="System architecture">
+          <img src="img/structuranet-architecture.webp" alt="Architecture: React client, Express backend, Python AI engine, MongoDB, LLM provider, GNS3 project kit" width="1600" height="900" loading="lazy">
+        </button>
+        <figcaption><b>Architecture</b><span>three tiers plus the LLM provider and GNS3</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="wrap" id="evidence" aria-labelledby="ev-h">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Evidence</span>
+        <h2 id="ev-h">What we verified, and what we didn't</h2>
+      </div>
+      <p>The thesis reports mechanisms and executed tests. It does not claim success rates or speedups that were never benchmarked.</p>
+    </div>
+    <div class="evidence">
+      <div class="ev yes">
+        <span class="k">Verified</span>
+        <h4>Executed and checked</h4>
+        <ul>
+          <li><span>Golden export test: a minimal topology exports and passes all 11 structural checks. I re-ran it on the public repository in October 2026, and it passes.</span></li>
+          <li><span>Five golden export cases were recorded as passing in the thesis on 15 July 2026.</span></li>
+          <li><span>Safe-merge audit: injected attempts to overwrite the platform, metadata, and existing configs were all rejected by the right gate.</span></li>
+          <li><span>Validator error injection: removing required keys, pointing links at missing ports, and invalid VLANs each triggered the expected severity.</span></li>
+          <li><span>Generated projects imported into GNS3, as shown in the screenshots above.</span></li>
+        </ul>
+      </div>
+      <div class="ev no">
+        <span class="k">Not yet measured</span>
+        <h4>Open work, stated plainly</h4>
+        <ul>
+          <li><span>How often auto-repair fires and how many retries a typical request needs. This needs a fixed prompt set and a pinned model.</span></li>
+          <li><span>The latency gain from the persistent worker over one process per request.</span></li>
+          <li><span>Intent classification accuracy on a labeled corpus.</span></li>
+          <li><span>Generated Cisco configs are a starting point. They are not certified production-ready.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="team-h">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Team</span>
+        <h2 id="team-h">Built by eight engineers</h2>
+      </div>
+      <p>Supervised by Assoc. Prof. Hany El-Ghaish, Department of Computer and Automatic Control, Faculty of Engineering, Tanta University.</p>
+    </div>
+    <div class="team">
+      <div>Seif El-Eslam Mohamed</div>
+      <div>Samir Mohamed Samir</div>
+      <div class="me">Farah Bassam El-Shenawy</div>
+      <div>Zyad Wael Attia</div>
+      <div>Seif El-Deen Abd El-Fatah</div>
+      <div>Nourhan Sameh Fayed</div>
+      <div>Ibrahim Hisham Al-Khouly</div>
+      <div>Ahmed Hussein Yousef</div>
+    </div>
+    <div class="actions" style="margin-top:32px">
+      <a class="btn btn-light" href="https://github.com/FarahElshenawi/Structranet_App" target="_blank" rel="noopener">View the code ↗</a>
+      <a class="btn btn-dark" href="index.html">Back to portfolio</a>
+    </div>
+  </section>
+
+  <footer class="wrap">
+    <span>© 2026 Farah Elshenawy · Cairo, Egypt</span>
+    <span><a href="index.html">Portfolio</a> · <a href="https://github.com/FarahElshenawi" target="_blank" rel="noopener">GitHub</a> · <a href="#top">Back to top ↑</a></span>
+  </footer>
+</main>
+
+<dialog class="lb" id="lb" aria-label="Image preview">
+  <img id="lb-img" alt="">
+  <div class="lb-bar"><span id="lb-cap"></span><button type="button" id="lb-close">Close</button></div>
+</dialog>
+<script>
+(function () {
+  var lb = document.getElementById('lb');
+  if (lb) {
+    var lbImg = document.getElementById('lb-img'), lbCap = document.getElementById('lb-cap');
+    document.addEventListener('click', function (e) {
+      var shot = e.target.closest('[data-zoom]');
+      if (!shot || !lb.showModal) return;
+      lbImg.src = shot.getAttribute('data-zoom');
+      lbImg.alt = shot.getAttribute('data-cap') || '';
+      lbCap.textContent = shot.getAttribute('data-cap') || '';
+      lb.showModal();
+    });
+    document.getElementById('lb-close').addEventListener('click', function () { lb.close(); });
+    lb.addEventListener('click', function (e) { if (e.target === lb) lb.close(); });
+  }
+
+  var toastTimer;
+  window.siteToast = function (msg) {
+    var t = document.querySelector('.toast');
+    if (!t) { t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 2800);
+  };
+
+  document.querySelectorAll('[data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var text = btn.getAttribute('data-copy');
+      var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1600); };
+      var fallback = function () {
+        var v = btn.parentElement.querySelector('.v');
+        var r = document.createRange(); r.selectNodeContents(v);
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        window.siteToast('Selected. Press Ctrl+C or Cmd+C to copy.');
+      };
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+        else fallback();
+      } catch (err) { fallback(); }
+    });
+  });
+
+  // Inside the Claude artifact viewer, plain download links are blocked, so use the downloads capability there.
+  document.querySelectorAll('[data-cv]').forEach(function (a) {
+    a.addEventListener('click', async function (e) {
+      if (!window.claude || typeof window.claude.use !== 'function') return;
+      e.preventDefault();
+      try {
+        var downloads = await window.claude.use('downloads');
+        if (!downloads) { window.siteToast('The CV download is not available in this view.'); return; }
+        var res = await fetch(a.getAttribute('href'));
+        if (!res.ok) throw { code: 'fetch' };
+        await downloads.save({ filename: 'Farah_Elshenawy_AI_Engineer.pdf', data: await res.blob() });
+      } catch (err) {
+        if (err && err.code === 'declined') return;
+        if (err && err.code === 'rate_limited') { window.siteToast('A download prompt is already open.'); return; }
+        window.siteToast('The CV could not be downloaded here. Try again on the live site.');
+      }
+    });
+  });
+})();
+
+</script><script defer src="/_vercel/insights/script.js"></script></body></html>
